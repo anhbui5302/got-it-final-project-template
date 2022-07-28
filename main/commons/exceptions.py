@@ -17,6 +17,7 @@ class StatusCode:
 class _ErrorCode:
     BAD_REQUEST = 400000
     VALIDATION_ERROR = 400001
+    VALUE_EXISTED_ERROR = 400002
     UNAUTHORIZED = 401000
     FORBIDDEN = 403000
     NOT_FOUND = 404000
@@ -27,6 +28,7 @@ class _ErrorCode:
 class _ErrorMessage:
     BAD_REQUEST = "Bad request."
     VALIDATION_ERROR = "Validation error."
+    VALUE_EXISTED_ERROR = "Value existed error"
     UNAUTHORIZED = "Unauthorized."
     FORBIDDEN = "Forbidden."
     NOT_FOUND = "Not found."
@@ -78,6 +80,12 @@ class ValidationError(BaseError):
     status_code = StatusCode.BAD_REQUEST
     error_message = _ErrorMessage.VALIDATION_ERROR
     error_code = _ErrorCode.VALIDATION_ERROR
+
+
+class ValueExistedError(BaseError):
+    status_code = StatusCode.BAD_REQUEST
+    error_message = _ErrorMessage.VALUE_EXISTED_ERROR
+    error_code = _ErrorCode.VALUE_EXISTED_ERROR
 
 
 class Unauthorized(BaseError):
