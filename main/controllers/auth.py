@@ -5,7 +5,7 @@ import jwt
 from main import app, config, db
 from main.commons.decorators import validate_request_body
 from main.commons.exceptions import Unauthorized, ValueExistedError
-from main.engines.controller_helpers import (
+from main.libs.controller_helpers import (
     check_hashed_password,
     generate_hashed_password_and_salt,
 )
@@ -50,7 +50,7 @@ def login(**kwargs):
     payload = {
         "id": user.id,
         "exp": datetime.datetime.utcnow()
-        + datetime.timedelta(seconds=config.TOKEN_EXP_SECONDS),
+        + datetime.timedelta(seconds=config.TOKEN_EXPIRATION_SECONDS),
     }
 
     # Generate a JWT

@@ -28,10 +28,6 @@ class CategoryModel(db.Model):
         return cls.query.filter_by(name=name).one_or_none()
 
     @classmethod
-    def get_all(cls):
-        return cls.query.all()
-
-    @classmethod
     def get_multiple(cls, start_id, end_id):
         # page = 2, per_page = 2
         # start_id = 2, end_id = 4
