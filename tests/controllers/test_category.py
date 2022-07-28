@@ -7,19 +7,20 @@ from main.engines.test_helpers import generate_mock_user_token
 
 
 def test_get_categories_success(client):
+    # No authorization, no query params.
     response = client.get("/categories")
     data = response.get_json()
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
+    assert type(data["categories"]) == list
     assert len(data) == 4  # categories, page, per_page, total
-    assert len(data["categories"]) == 4  # 4 categories in db
     assert data["page"] == 1
     assert data["per_page"] == 20
-    assert data["total"] == 4
+    assert "total" in data
 
 
 def test_get_categories_success_with_authorization(client):
-    # Authorization header
+    # With authorization, no query params.
     access_token = generate_mock_user_token(app, 1)
     response = client.get(
         "/categories", headers={"Authorization": "Bearer " + access_token}
@@ -28,39 +29,36 @@ def test_get_categories_success_with_authorization(client):
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert len(data) == 4  # categories, page, per_page, total
-    assert len(data["categories"]) == 4  # 4 categories in db
-    # categories 1 and 3 belong to user 1
-    assert data["categories"][0]["is_owner"]
-    assert data["categories"][2]["is_owner"]
+    assert type(data["categories"]) == list
     assert data["page"] == 1
     assert data["per_page"] == 20
-    assert data["total"] == 4
+    assert "total" in data
 
 
 def test_get_categories_success_with_page(client):
-    # page
+    # With page
     response = client.get("/categories", query_string={"page": 3})
     data = response.get_json()
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert len(data) == 4  # categories, page, per_page, total
-    assert len(data["categories"]) == 0  # 0 category in page 3
+    assert type(data["categories"]) == list
     assert data["page"] == 3
     assert data["per_page"] == 20
-    assert data["total"] == 4
+    assert "total" in data
 
 
 def test_get_categories_success_with_per_page(client):
-    # per_page
+    # With per_page
     response = client.get("/categories", query_string={"per_page": 2})
     data = response.get_json()
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert len(data) == 4  # categories, page, per_page, total
-    assert len(data["categories"]) == 2  # 2 categories in page 1
+    assert type(data["categories"]) == list
     assert data["page"] == 1
     assert data["per_page"] == 2
-    assert data["total"] == 4
+    assert "total" in data
 
 
 @pytest.mark.parametrize(
@@ -74,6 +72,7 @@ def test_get_categories_success_with_per_page(client):
     ],
 )
 def test_get_categories_fail_invalid_authorization(client, jwt):
+    # Token has invalid format
     response = client.get("/categories", headers={"Authorization": jwt})
     data = response.get_json()
     assert response.status_code == 400
@@ -84,6 +83,7 @@ def test_get_categories_fail_invalid_authorization(client, jwt):
 
 
 def test_get_categories_fail_incorrect_authorization(client):
+    # Token is invalid
     response = client.get("/categories", headers={"Authorization": "Bearer Invalid"})
     data = response.get_json()
     assert response.status_code == 401
@@ -95,7 +95,7 @@ def test_get_categories_fail_incorrect_authorization(client):
 
 @pytest.mark.parametrize("value", ["a", "-1", "0", "1.5"])
 def test_get_categories_fail_incorrect_page(client, value):
-    # page
+    # page value is invalid
     response = client.get("/categories", query_string={"page": value})
     data = response.get_json()
     assert response.status_code == 400
@@ -109,7 +109,7 @@ def test_get_categories_fail_incorrect_page(client, value):
 
 @pytest.mark.parametrize("value", ["a", "-1", "0", "1.5"])
 def test_get_categories_fail_incorrect_per_page(client, value):
-    # per_page
+    # per_page value is invalid
     response = client.get("/categories", query_string={"per_page": value})
     data = response.get_json()
     assert response.status_code == 400
@@ -142,7 +142,7 @@ def test_post_categories_success(client):
 
 def test_post_categories_success_with_redundant_fields(client):
     access_token = generate_mock_user_token(app, 1)
-    # Random parameters
+    # Random fields
     request_body = {"name": "test2", "random": True}
     response = client.post(
         "/categories",
@@ -161,6 +161,7 @@ def test_post_categories_success_with_redundant_fields(client):
 
 
 def test_post_categories_fail_missing_name(client):
+    # name is missing from request body
     access_token = generate_mock_user_token(app, 1)
     request_body = {"random": "test"}
     response = client.post(
@@ -182,7 +183,7 @@ def test_post_categories_fail_missing_name(client):
 
 
 def test_post_categories_fail_missing_request_body(client):
-    # Empty request body
+    # Request body is not valid json
     access_token = generate_mock_user_token(app, 1)
     response = client.post(
         "/categories",
@@ -223,6 +224,7 @@ def test_post_categories_fail_empty_request_body(client):
 
 @pytest.mark.parametrize("name", ["", "x" * 256, " " * 10 + "x" * 256 + " " * 10])
 def test_post_categories_fail_invalid_name(client, name):
+    # name format is invalid
     access_token = generate_mock_user_token(app, 1)
     request_body = {"name": name}
     response = client.post(
@@ -245,7 +247,7 @@ def test_post_categories_fail_invalid_name(client, name):
 
 def test_post_categories_fail_missing_content_type(client):
     access_token = generate_mock_user_token(app, 1)
-    # Missing content-type or content-type is not application/json
+    # Missing content-type
     request_body = {"name": "test"}
     response = client.post(
         "/categories",
@@ -262,7 +264,7 @@ def test_post_categories_fail_missing_content_type(client):
 
 def test_post_categories_fail_content_type_not_json(client):
     access_token = generate_mock_user_token(app, 1)
-    # Missing content-type or content-type is not application/json
+    # Content-Type is not application/json
     request_body = {"name": "test"}
     response = client.post(
         "/categories",
@@ -281,6 +283,7 @@ def test_post_categories_fail_content_type_not_json(client):
 
 
 def test_post_categories_fail_missing_authorization(client):
+    # Missing authorization header
     request_body = {"name": "test"}
     response = client.post(
         "/categories",
@@ -307,6 +310,7 @@ def test_post_categories_fail_missing_authorization(client):
     ],
 )
 def test_post_categories_fail_invalid_authorization(client, jwt):
+    # Token format is invalid
     request_body = {"name": "test"}
     response = client.post(
         "/categories",
@@ -322,6 +326,7 @@ def test_post_categories_fail_invalid_authorization(client, jwt):
 
 
 def test_post_categories_fail_incorrect_authorization(client):
+    # Token is invalid
     request_body = {"name": "test"}
     response = client.post(
         "/categories",
@@ -337,6 +342,7 @@ def test_post_categories_fail_incorrect_authorization(client):
 
 
 def test_post_categories_fail_name_existed(client):
+    # name provided already exists
     access_token = generate_mock_user_token(app, 3)
     request_body = {"name": "category1"}
     response = client.post(
@@ -392,6 +398,7 @@ def test_delete_categories_success(client):
 
 @pytest.mark.parametrize("category_id", ["a", "-1", "0", "1.5"])
 def test_delete_categories_fail_invalid_url_params(client, category_id):
+    # url variable is invalid
     access_token = generate_mock_user_token(app, 1)
 
     response = client.delete(
@@ -407,6 +414,7 @@ def test_delete_categories_fail_invalid_url_params(client, category_id):
 
 
 def test_delete_categories_fail_missing_authorization(client):
+    # Authorization header is missing
     response = client.delete("/categories/1")
     data = response.get_json()
     assert response.status_code == 400
@@ -427,6 +435,7 @@ def test_delete_categories_fail_missing_authorization(client):
     ],
 )
 def test_delete_categories_fail_invalid_authorization(client, jwt):
+    # Token format is invalid
     response = client.delete("/categories/1", headers={"Authorization": jwt})
     data = response.get_json()
     assert response.status_code == 400
@@ -437,6 +446,7 @@ def test_delete_categories_fail_invalid_authorization(client, jwt):
 
 
 def test_delete_categories_fail_incorrect_authorization(client):
+    # Token is invalid
     response = client.delete(
         "/categories/1", headers={"Authorization": "Bearer Invalid"}
     )
@@ -449,6 +459,8 @@ def test_delete_categories_fail_incorrect_authorization(client):
 
 
 def test_delete_categories_fail_forbidden(client):
+    # Trying to delete a category another user created.
+    # Category 2 belongs to user with id 2
     access_token = generate_mock_user_token(app, 1)
     response = client.delete(
         "/categories/2", headers={"Authorization": "Bearer " + access_token}
@@ -462,6 +474,7 @@ def test_delete_categories_fail_forbidden(client):
 
 
 def test_delete_categories_fail_not_found(client):
+    # The specified category is not found
     access_token = generate_mock_user_token(app, 1)
     response = client.delete(
         "/categories/200", headers={"Authorization": "Bearer " + access_token}

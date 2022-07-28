@@ -15,7 +15,7 @@ def test_register_success(client):
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert len(data) == 4  # id, email, created, updated
-    assert data["id"] == 3  # Already 2 users inserted
+    assert "id" in data
     assert data["email"] == request_body["email"]
 
 
@@ -36,7 +36,7 @@ def test_register_success_with_redundant_fields(client):
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "application/json"
     assert len(data) == 4  # id, email, created, updated
-    assert data["id"] == 4  # Already 3 users inserted
+    assert "id" in data
     assert data["email"] == request_body["email"]
 
 
@@ -59,7 +59,7 @@ def test_register_fail_email_already_exists(client):
 
 
 def test_register_fail_missing_request_body(client):
-    # No request body
+    # Request body is not valid json
     response = client.post("/users", headers={"Content-Type": "application/json"})
     data = response.get_json()
     assert response.status_code == 400
@@ -82,6 +82,7 @@ def test_register_fail_missing_content_type(client):
 
 
 def test_register_fail_content_type_not_json(client):
+    # Content-Type is not "application/json"
     request_body = {"email": "valid@email.com", "password": "Password123"}
     response = client.post(
         "/users", headers={"Content-Type": "text/plain"}, data=json.dumps(request_body)
@@ -95,6 +96,7 @@ def test_register_fail_content_type_not_json(client):
 
 
 def test_register_fail_empty_request_body(client):
+    # request body is empty
     request_body = {}
     response = client.post(
         "/users",
@@ -113,6 +115,7 @@ def test_register_fail_empty_request_body(client):
 
 
 def test_register_fail_missing_email(client):
+    # email is missing from request body
     request_body = {"password": "Password123"}
     response = client.post(
         "/users",
@@ -130,6 +133,7 @@ def test_register_fail_missing_email(client):
 
 
 def test_register_fail_missing_password(client):
+    # password is missing from request body
     request_body = {"email": "valid@email.com"}
     response = client.post(
         "/users",
@@ -151,6 +155,7 @@ def test_register_fail_missing_password(client):
     ["Aa123", "Aa123456789012345678901234567890z", "aaaaa1", "AAAAA1", "AAAaaa"],
 )
 def test_register_fail_invalid_password(client, password):
+    # password format is invalid
     request_body = {"email": "validemail@true.com", "password": password}
     response = client.post(
         "/users",
@@ -181,6 +186,7 @@ def test_register_fail_invalid_password(client, password):
     ],
 )
 def test_register_fail_invalid_email(client, email):
+    # email format is invalid
     request_body = {"email": email, "password": "Password123"}
     response = client.post(
         "/users",
@@ -198,6 +204,7 @@ def test_register_fail_invalid_email(client, email):
 
 
 def test_register_fail_multiple_fields(client):
+    # multiple fields have invalid format.
     request_body = {"email": "invalidemail", "password": "a"}
     response = client.post(
         "/users",
@@ -250,7 +257,7 @@ def test_login_success_with_redundant_fields(client):
     assert "access_token" in data
 
 
-def test_login_fail_email_already_exists(client):
+def test_login_fail_email_does_not_exist(client):
     # Email does not exist in db
     request_body = {"email": "not@indb.com", "password": "Password123"}
     response = client.post(
@@ -283,6 +290,7 @@ def test_login_fail_password_incorrect(client):
 
 
 def test_login_fail_missing_request_body(client):
+    # request body is missing
     response = client.post("/tokens", headers={"Content-Type": "application/json"})
     data = response.get_json()
     assert response.status_code == 400
@@ -293,6 +301,7 @@ def test_login_fail_missing_request_body(client):
 
 
 def test_login_fail_missing_content_type(client):
+    # Content-Type header is missing
     request_body = {"email": "user@abc.com", "password": "Password123"}
     response = client.post("/tokens", data=json.dumps(request_body))
     data = response.get_json()
@@ -304,6 +313,7 @@ def test_login_fail_missing_content_type(client):
 
 
 def test_login_fail_content_type_not_json(client):
+    # Content-Type is not "application/json"
     request_body = {"email": "user@abc.com", "password": "Password123"}
     response = client.post(
         "/tokens", headers={"Content-Type": "text/plain"}, data=json.dumps(request_body)
@@ -317,7 +327,7 @@ def test_login_fail_content_type_not_json(client):
 
 
 def test_login_fail_empty_request_body(client):
-    # Empty body
+    # Request body is empty
     request_body = {}
     response = client.post(
         "/tokens",
@@ -336,7 +346,7 @@ def test_login_fail_empty_request_body(client):
 
 
 def test_login_fail_missing_email(client):
-
+    # email is missing from request body
     request_body = {"password": "Password123"}
     response = client.post(
         "/tokens",
@@ -354,7 +364,7 @@ def test_login_fail_missing_email(client):
 
 
 def test_login_fail_missing_password(client):
-    # Missing email or password
+    # password is missing from request body.
     request_body = {"email": "user@abc.com"}
     response = client.post(
         "/tokens",
@@ -376,7 +386,7 @@ def test_login_fail_missing_password(client):
     ["Aa123", "Aa123456789012345678901234567890z", "aaaaa1", "AAAAA1", "AAAaaa"],
 )
 def test_login_fail_invalid_password(client, password):
-    # Email/password is not valid
+    # password format is invalid
     request_body = {"email": "validemail@yay.com", "password": password}
     response = client.post(
         "/tokens",
@@ -407,7 +417,7 @@ def test_login_fail_invalid_password(client, password):
     ],
 )
 def test_login_fail_invalid_email(client, email):
-    # Email/password is not valid
+    # email format is invalid
     request_body = {"email": email, "password": "Password123"}
     response = client.post(
         "/tokens",
@@ -425,6 +435,7 @@ def test_login_fail_invalid_email(client, email):
 
 
 def test_login_fail_invalid_fields(client):
+    # multiple fields have invalid format
     request_body = {"email": "invalidemail", "password": "a"}
     response = client.post(
         "/tokens",

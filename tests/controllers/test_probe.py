@@ -8,7 +8,7 @@ def test_ping(client):
 
 def test_ready(client):
     response = client.get("/ready")
-    assert response.status_code == 405
+    assert response.status_code == 200
 
     response = client.post("/ready")
-    assert response.status_code == 200
+    assert response.status_code == 405
