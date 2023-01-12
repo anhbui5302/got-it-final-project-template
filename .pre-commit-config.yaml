@@ -1,14 +1,30 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 22.6.0
-    hooks:
-      - id: black
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
-    hooks:
-      - id: flake8
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
       - id: isort
-exclude: ^migrations
+        exclude: ^migrations/
+  - repo: https://github.com/psf/black
+    rev: 22.6.0
+    hooks:
+      - id: black
+        args:
+          - --skip-string-normalization
+        exclude: ^migrations/
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+        exclude: ^migrations/
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: double-quote-string-fixer
+  - repo: local
+    hooks:
+      - id: no-print
+        name: check for print()
+        entry: '\bprint\('
+        language: pygrep
+        types:
+          - python
