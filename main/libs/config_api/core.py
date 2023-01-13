@@ -1,6 +1,6 @@
 from main.libs.app_service import app_service
 
-from .util import handle_exception
+from .util import handle_exception, inject_project_url
 
 
 class ConfigAPI:
@@ -27,3 +27,11 @@ class ConfigAPI:
             args['ids'] = ','.join(args['ids'])
 
         return self.application_service_client.make_request('get', url, params=args)
+
+    @handle_exception
+    @inject_project_url
+    def init_project_rasas(self, project_url, payload: dict):
+        url = f'{project_url}/rasas'
+        return self.application_service_client.make_request(
+            'post', url, payload=payload
+        )

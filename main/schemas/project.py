@@ -1,5 +1,6 @@
-from marshmallow import ValidationError, fields, pre_load
+from marshmallow import ValidationError, fields, pre_load, validate
 
+from main.enums import ProjectRasaEnvironment
 from main.libs.log import ServiceLogger
 from main.schemas.base import BaseSchema, PaginationSchema
 
@@ -30,3 +31,17 @@ class ProjectsSchema(PaginationSchema):
             raise ValidationError('Invalid ids parameters')
 
         return data
+
+
+class ProjectInitRasaSchema(BaseSchema):
+    environments = fields.List(
+        fields.String(validate=validate.OneOf(ProjectRasaEnvironment.get_list())),
+        required=True,
+        validate=validate.Length(min=1, max=2),
+    )
+
+
+class RasaStatusChangedSchema(BaseSchema):
+    project_id = fields.Integer(required=True)
+    status = fields.String(required=True)
+    env = fields.String(required=True)

@@ -22,10 +22,16 @@ class BaseConfig:
     ALLOWED_DOMAINS = ['bot-it.ai']
     REFRESH_TOKEN_EXPIRATION_TIMEOUT = 1 * 60 * 60 * 24  # 1 day
 
-    APPLICATION_KEY = ''
-    APPLICATION_SECRET = ''
+    # EVENT BUS
+    EVENT_BUS_URL = 'http://localhost:4000/api/produce'
+    EVENT_BUS_DELAYED_URL = 'http://localhost:4000/api/produce_delayed'
+    API_SERVER = 'http://localhost:8060'
+    EVENT_BUS_PARTITIONS = 100
+
+    APPLICATION_KEY = 'admin_panel_api_application_key'
+    APPLICATION_SECRET = 'admin_panel_api_application_secret'
 
     CONFIG_API_BASE_URL = 'http://localhost:5000'
-    CONFIG_API_APPLICATION_KEY = ''
-    CONFIG_API_APPLICATION_SECRET = ''
+    CONFIG_API_APPLICATION_KEY = 'config_manager_application_key'
+    CONFIG_API_APPLICATION_SECRET = 'config_manager_application_secret'
     CONFIG_API_REQUEST_TIMEOUT = 300

@@ -40,6 +40,12 @@ class AccountErrorCode:
     ACCOUNT_NOT_FOUND = 401104
 
 
+class ApplicationErrorCode:
+    # Application error codes (xxx2xx)
+    # Unauthorized error codes (4012xx)
+    INACTIVE_APPLICATION = 401200
+
+
 class ErrorMessage:
     BAD_REQUEST = 'Bad request.'
     VALIDATION_ERROR = 'Validation error.'
@@ -59,6 +65,11 @@ class AccountErrorMessage:
     # Account error messages
     INACTIVE_ACCOUNT = 'Inactive account.'
     ACCOUNT_NOT_FOUND = 'Account not found.'
+
+
+class ApplicationErrorMessage:
+    # Application error messages
+    INACTIVE_APPLICATION = 'Your application credentials have been expired or deleted.'
 
 
 class BaseError(Exception):
