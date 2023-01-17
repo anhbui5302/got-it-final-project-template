@@ -56,19 +56,24 @@ class ConfigAPI:
 
     @handle_exception
     @inject_project_url
-    def export_project_data(self, project_url, export_connections):
+    def export_project_data(self, project_url, copy_connections: bool):
         url = f'{project_url}/export'
-        payload = {'copy_connections': export_connections}
+        payload = {'copy_connections': copy_connections}
         return self.application_service_client.make_request(
             'post', url, payload=payload
         )
 
     @handle_exception
     @inject_project_url
-    def import_project_data(self, project_url, file_tuple: tuple):
+    def import_project_data(
+        self, project_url, file_tuple: tuple, copy_connections: bool
+    ):
         url = f'{project_url}/import'
         files = {'files': file_tuple}
-        return self.application_service_client.make_request('post', url, files=files)
+        payload = {'copy_connections': copy_connections}
+        return self.application_service_client.make_request(
+            'post', url, files=files, payload=payload
+        )
 
     @handle_exception
     @inject_project_url

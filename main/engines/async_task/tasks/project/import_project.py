@@ -12,7 +12,13 @@ from main.engines.exceptions import NoValidImportFileException
 from main.engines.file import download_file
 from main.engines.project import unzip_import_file
 from main.engines.pusher import trigger_async_task_status_changed
-from main.enums import AsyncTaskStatus, BotType, ProjectImportServiceFileName
+from main.enums import (
+    IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING,
+    AsyncTaskStatus,
+    AutoflowState,
+    BotType,
+    ProjectImportServiceFileName,
+)
 from main.libs.utils import get_config_api_sdk, get_deepsearch_api_sdk, get_pfd_api_sdk
 from main.models.async_task import AsyncTaskModel
 
@@ -33,17 +39,41 @@ class ImportProject(BaseAsyncTask):
     @handle_config_api_exception
     @handle_deepsearch_api_exception
     @handle_pfd_api_exception
-    def import_project(self, project_id: int, organization_id: int, file_url: str):
+    def import_project(
+        self,
+        project_id: int,
+        organization_id: int,
+        file_url: str,
+        import_types: list,
+        import_connections: bool,
+    ):
+
         zipped_file = download_file(file_url)
         try:
             unzipped_files = unzip_import_file(zipped_file)
         except NoValidImportFileException as e:
             raise exceptions.BadRequest(error_message=e.message)
 
+        unzipped_file_names = [file['name'] for file in unzipped_files]
+        for import_type in import_types:
+            required_file_name = IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING[import_type]
+            if required_file_name not in unzipped_file_names:
+                raise exceptions.BadRequest(
+                    error_message=f'{import_type} specified for import but {required_file_name} is not in uploaded file.'
+                )
+
         config_api = get_config_api_sdk()
         deepsearch_api = get_deepsearch_api_sdk()
         pfd_api = get_pfd_api_sdk()
-        try:
+        autoflows = config_api.get_autoflows(
+            project_id=project_id, organization_id=organization_id
+        )
+        required_file_names = [
+            IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING[import_type]
+            for import_type in import_types
+        ]
+        # Import project settings
+        if ProjectImportServiceFileName.CONFIG_API in required_file_names:
             config_api_file = [
                 file
                 for file in unzipped_files
@@ -53,17 +83,23 @@ class ImportProject(BaseAsyncTask):
                 project_id=project_id,
                 organization_id=organization_id,
                 file_tuple=(config_api_file['name'], config_api_file['content']),
+                copy_connections=import_connections,
             )
-        except IndexError:
-            # This is thrown when file is not in import zip
-            pass
-
-        try:
+        # Import FAQ Bot
+        elif ProjectImportServiceFileName.DEEPSEARCH_API in required_file_names:
             deepsearch_api_file = [
                 file
                 for file in unzipped_files
                 if file['name'] == ProjectImportServiceFileName.DEEPSEARCH_API
             ][0]
+            faq_autoflow = [
+                autoflow
+                for autoflow in autoflows
+                if autoflow['bot_type'] == BotType.FAQ
+            ][0]
+            if faq_autoflow['state'] != AutoflowState.BOT_CREATED:
+                raise exceptions.BadRequest(error_message='FAQ Bot is not created.')
+
             response = deepsearch_api.import_project_graph(
                 project_id=project_id,
                 file_tuple=(
@@ -85,16 +121,24 @@ class ImportProject(BaseAsyncTask):
                 autoflow_id=faq_autoflow['id'],
                 payload=payload,
             )
-        except IndexError:
-            # This is thrown when file is not in import zip
-            pass
-
-        try:
+        # Import Conversational Bot
+        elif ProjectImportServiceFileName.PFD_API in required_file_names:
             pfd_api_file = [
                 file
                 for file in unzipped_files
                 if file['name'] == ProjectImportServiceFileName.PFD_API
             ][0]
+
+            conv_autoflow = [
+                autoflow
+                for autoflow in autoflows
+                if autoflow['bot_type'] == BotType.CONVERSATIONAL
+            ][0]
+            if conv_autoflow['state'] != AutoflowState.BOT_CREATED:
+                raise exceptions.BadRequest(
+                    error_message='Conversational Bot is not created.'
+                )
+
             sessions = pfd_api.get_sessions(project_id)
             if not sessions:
                 raise exceptions.BadRequest(
@@ -105,10 +149,6 @@ class ImportProject(BaseAsyncTask):
                 latest_session['id'],
                 file_tuple=(pfd_api_file['name'], pfd_api_file['content']),
             )
-
-        except IndexError:
-            # This is thrown when file is not in import zip
-            pass
 
         return {}
 

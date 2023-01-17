@@ -70,6 +70,17 @@ class ProjectExportType(EnumBase):
     CONVERSATIONAL = 'conversational'
 
 
+class ProjectImportType(ProjectExportType):
+    pass
+
+
+IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING = {
+    ProjectImportType.PROJECT_SETTINGS: ProjectImportServiceFileName.CONFIG_API,
+    ProjectImportType.FAQ: ProjectImportServiceFileName.DEEPSEARCH_API,
+    ProjectImportType.CONVERSATIONAL: ProjectImportServiceFileName.PFD_API,
+}
+
+
 class AutoflowState(EnumBase):
     BOT_CREATED = 'bot_created'
 

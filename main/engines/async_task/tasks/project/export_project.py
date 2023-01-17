@@ -51,10 +51,9 @@ class ExportProject(BaseAsyncTask):
         account_id: int,
         project_id: int,
         organization_id: int,
-        export: list,
+        export_types: list,
         export_connections: bool,
     ):
-        export_types = export
         config_api = get_config_api_sdk()
         deepsearch_api = get_deepsearch_api_sdk()
         pfd_api = get_pfd_api_sdk()
@@ -77,9 +76,9 @@ class ExportProject(BaseAsyncTask):
                     if autoflow['bot_type'] == BotType.FAQ
                 ][0]
                 graph_id = faq_autoflow.get('meta_data', {}).get('graph_id')
-
                 if faq_autoflow['state'] != AutoflowState.BOT_CREATED:
                     raise exceptions.BadRequest(error_message='FAQ Bot is not created.')
+
                 deepsearch_api_response = deepsearch_api.export_project_graph(
                     project_id, graph_id
                 )
