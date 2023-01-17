@@ -22,16 +22,50 @@ class BaseConfig:
     ALLOWED_DOMAINS = ['bot-it.ai']
     REFRESH_TOKEN_EXPIRATION_TIMEOUT = 1 * 60 * 60 * 24  # 1 day
 
+    MEMCACHED_SERVERS = ['127.0.0.1:11211']
+    MEMCACHED_KEY_PREFIX = 'stories-ai-api:m345:'
+
+    DISKCACHE_DIRECTORY = '~/.cache/diskcache'
+    DISKCACHE_SIZE_LIMIT = 2**30  # 1GB
+
     # EVENT BUS
     EVENT_BUS_URL = 'http://localhost:4000/api/produce'
     EVENT_BUS_DELAYED_URL = 'http://localhost:4000/api/produce_delayed'
     API_SERVER = 'http://localhost:8060'
     EVENT_BUS_PARTITIONS = 100
 
-    APPLICATION_KEY = 'admin_panel_api_application_key'
-    APPLICATION_SECRET = 'admin_panel_api_application_secret'
+    # PUSHER
+    PUSHER_APP_ID = '711154'
+    PUSHER_CHANNEL_NAMESPACE = 'm3.9.2'
+    PUSHER_KEY = ''
+    PUSHER_SECRET = ''
 
+    # AWS
+    AWS_ACCESS_KEY_ID = ''
+    AWS_SECRET_ACCESS_KEY = ''
+    AWS_FILE_PATH_PREFIX = ''
+    AWS_S3_BUCKET_NAME = ''
+    AWS_S3_URL = ''
+
+    APPLICATION_KEY = ''
+    APPLICATION_SECRET = ''
+
+    # CONFIG API
     CONFIG_API_BASE_URL = 'http://localhost:5000'
-    CONFIG_API_APPLICATION_KEY = 'config_manager_application_key'
-    CONFIG_API_APPLICATION_SECRET = 'config_manager_application_secret'
+    CONFIG_API_APPLICATION_KEY = ''
+    CONFIG_API_APPLICATION_SECRET = ''
     CONFIG_API_REQUEST_TIMEOUT = 300
+
+    # DEEPSEARCH API
+    DEEPSEARCH_API_BASE_URL = 'http://localhost:8090'
+    DEEPSEARCH_API_APPLICATION_KEY = ''
+    DEEPSEARCH_API_APPLICATION_SECRET = ''
+
+    # PFD API
+    PFD_API_BASE_URL = 'http://localhost:8091'
+    PFD_API_REQUEST_TIMEOUT = 2 * 60 * 60  # seconds
+
+    ASYNC_TASK_MAX_RETRY = 0
+    ASYNC_TASK_EXPIRATION_TIMEOUT = 30  # seconds
+
+    UPLOADED_FILE_EXPIRATION_IN_SECONDS = 5 * 60  # seconds

@@ -20,6 +20,10 @@ class ErrorCode:
     BAD_REQUEST = 400000
     VALIDATION_ERROR = 400001
     INVALID_AUTHORIZATION_HEADER = 400002
+    CONVERSATION_NOT_IN_SESSION = 400010
+    SELECTED_LABELS_VALIDATION_ERROR = 400020
+    SESSION_NOT_IN_PROJECT = 400012
+    INVALID_SESSION_FILE_INPUT = 400011
 
     # Unauthorized error codes (4010xx)
     UNAUTHORIZED = 401000
@@ -28,7 +32,12 @@ class ErrorCode:
     FRESH_ACCESS_TOKEN_REQUIRED = 401003
 
     FORBIDDEN = 403000
+
     NOT_FOUND = 404000
+    CONVERSATION_NOT_FOUND = 404003
+    SESSION_NOT_FOUND = 404004
+    REPORT_NOT_FOUND = 404005
+
     METHOD_NOT_ALLOWED = 405000
     INTERNAL_SERVER_ERROR = 500000
 
@@ -59,6 +68,11 @@ class ErrorMessage:
     NOT_FOUND = 'Not found.'
     METHOD_NOT_ALLOWED = 'Method not allowed.'
     INTERNAL_SERVER_ERROR = 'Internal server error.'
+    CONVERSATION_NOT_FOUND = 'Conversation is not found.'
+    SESSION_NOT_FOUND = 'Session is not found.'
+    CONVERSATION_NOT_IN_SESSION = 'Conversation is not in the session.'
+    REPORT_NOT_FOUND = 'Report is not found.'
+    SESSION_NOT_IN_PROJECT = 'Session is not in the project.'
 
 
 class AccountErrorMessage:

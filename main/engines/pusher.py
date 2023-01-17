@@ -116,3 +116,9 @@ def _defer_trigger(channel_name: str, event_type: str, data: Any) -> None:
 
 def trigger_rasa_status_changed(data: dict):
     _defer_trigger(_get_projects_channel_name(), PusherEvent.RASA_STATUS_CHANGED, data)
+
+
+def trigger_async_task_status_changed(data: dict):
+    _defer_trigger(
+        _get_projects_channel_name(), PusherEvent.ASYNC_TASK_STATUS_CHANGED, data
+    )

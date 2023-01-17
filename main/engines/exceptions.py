@@ -22,3 +22,7 @@ class AccountException(BaseEngineException):
 
 class TokenException(BaseEngineException):
     pass
+
+
+class NoValidImportFileException(BaseEngineException):
+    pass

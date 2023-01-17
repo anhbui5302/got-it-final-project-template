@@ -20,6 +20,24 @@ class ConfigAPI:
         self.request_timeout = kwargs.get('request_timeout', 10)  # seconds
 
     @handle_exception
+    @inject_project_url
+    def get_project(self, project_url):
+        return self.application_service_client.make_request('get', project_url)
+
+    @handle_exception
+    @inject_project_url
+    def get_autoflows(self, project_url):
+        url = f'{project_url}/autoflows'
+        return self.application_service_client.make_request('get', url)
+
+    @handle_exception
+    def get_autoflow(self, bot_type: str, *args, **kwargs):
+        autoflows = self.get_autoflows(*args, **kwargs)
+        return [autoflow for autoflow in autoflows if autoflow['bot_type'] == bot_type][
+            0
+        ]
+
+    @handle_exception
     def get_all_projects(self, args: dict = None):
         url = f'{self.base_url}/projects'
         # Convert args['ids'] back into a string of comma-separated values from list
@@ -35,3 +53,25 @@ class ConfigAPI:
         return self.application_service_client.make_request(
             'post', url, payload=payload
         )
+
+    @handle_exception
+    @inject_project_url
+    def export_project_data(self, project_url, export_connections):
+        url = f'{project_url}/export'
+        payload = {'copy_connections': export_connections}
+        return self.application_service_client.make_request(
+            'post', url, payload=payload
+        )
+
+    @handle_exception
+    @inject_project_url
+    def import_project_data(self, project_url, file_tuple: tuple):
+        url = f'{project_url}/import'
+        files = {'files': file_tuple}
+        return self.application_service_client.make_request('post', url, files=files)
+
+    @handle_exception
+    @inject_project_url
+    def update_autoflow(self, project_url, autoflow_id: int, payload: dict = None):
+        url = f'{project_url}/autoflows/{autoflow_id}'
+        return self.application_service_client.make_request('put', url, payload=payload)

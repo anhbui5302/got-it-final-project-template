@@ -12,3 +12,6 @@ google_auth~=2.6.6
 SAValidation~=0.4.1
 requests~=2.27.1
 pusher~=2.1.4
+boto3~=1.21.22
+diskcache~=5.4.0
+python-memcached~=1.59

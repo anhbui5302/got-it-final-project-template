@@ -8,8 +8,10 @@ from marshmallow import ValidationError
 
 from main import config, event_bus
 from main.commons import exceptions
+from main.commons.exceptions import ErrorCode, ErrorMessage
 from main.delayed_deferred import defer
 from main.libs.log import ServiceLogger
+from main.libs.utils import get_config_api_sdk
 
 logger = ServiceLogger(__name__)
 NO_BODY_PARSING_METHODS = ['GET']
@@ -116,9 +118,39 @@ def parse_args_with(schema):
     return parse_args_with_decorator
 
 
+def parse_files_with(schema):
+    def parse_request_files_with_decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            request_files = request.files.to_dict(flat=False)
+            try:
+                parsed_files = schema.load(request_files)
+            except ValidationError as e:
+                raise exceptions.ValidationError(error_data=e.messages)
+
+            kwargs['files'] = parsed_files
+            return f(*args, **kwargs)
+
+        return wrapper
+
+    return parse_request_files_with_decorator
+
+
+def validate_project(f):
+    @wraps(f)
+    @handle_config_api_exception
+    def wrapper(organization_id, project_id, **kwargs):
+        config_api = get_config_api_sdk()
+        response = config_api.get_project(organization_id, project_id)
+        kwargs['project'] = response
+        return f(**kwargs)
+
+    return wrapper
+
+
 def handle_config_api_exception(f):
     @wraps(f)
-    def wrapper(**kwargs):
+    def wrapper(*args, **kwargs):
         from main.libs.config_api.exception import (
             BadRequestError,
             ConfigManagerException,
@@ -126,7 +158,7 @@ def handle_config_api_exception(f):
         )
 
         try:
-            return f(**kwargs)
+            return f(*args, **kwargs)
         except BadRequestError as e:
             message = e.message or exceptions.ErrorMessage.BAD_REQUEST
             raise exceptions.BadRequest(error_message=message, error_data=e.data)
@@ -134,6 +166,90 @@ def handle_config_api_exception(f):
             message = e.message or exceptions.ErrorMessage.NOT_FOUND
             raise exceptions.NotFound(error_message=message, error_data=e.data)
         except ConfigManagerException as e:
+            logger.exception(message=str(e))
+            raise exceptions.InternalServerError()
+
+    return wrapper
+
+
+def handle_deepsearch_api_exception(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        from main.libs.deepsearch_api.exception import (
+            BadRequestError,
+            DeepsearchAPIException,
+            NotFoundError,
+        )
+
+        try:
+            return f(*args, **kwargs)
+        except BadRequestError as e:
+            message = e.message or exceptions.ErrorMessage.BAD_REQUEST
+            raise exceptions.BadRequest(error_message=message, error_data=e.data)
+        except NotFoundError as e:
+            message = e.message or exceptions.ErrorMessage.NOT_FOUND
+            raise exceptions.NotFound(error_message=message, error_data=e.data)
+        except DeepsearchAPIException as e:
+            logger.exception(message=str(e))
+            raise exceptions.InternalServerError()
+
+    return wrapper
+
+
+def handle_pfd_api_exception(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        from main.libs.pfd_api.exception import (
+            BadRequestException,
+            ConversationNotInSession,
+            InvalidSessionInputFile,
+            PFDAPIException,
+            ReportNotFound,
+            SelectedLabelsValidationError,
+            SessionNotFound,
+            SessionNotInProject,
+            StoriesAIConversationNotFound,
+            StoriesAIValidationError,
+        )
+
+        try:
+            return f(*args, **kwargs)
+        except SessionNotInProject:
+            raise exceptions.BadRequest(
+                error_code=ErrorCode.SESSION_NOT_IN_PROJECT,
+                error_message=ErrorMessage.SESSION_NOT_IN_PROJECT,
+            )
+        except SessionNotFound:
+            raise exceptions.NotFound(
+                error_code=ErrorCode.SESSION_NOT_FOUND,
+                error_message=ErrorMessage.SESSION_NOT_FOUND,
+            )
+        except ReportNotFound:
+            raise exceptions.NotFound(
+                error_code=ErrorCode.REPORT_NOT_FOUND,
+                error_message=ErrorMessage.REPORT_NOT_FOUND,
+            )
+        except ConversationNotInSession:
+            raise exceptions.BadRequest(
+                error_code=ErrorCode.CONVERSATION_NOT_IN_SESSION,
+                error_message=ErrorMessage.CONVERSATION_NOT_IN_SESSION,
+            )
+        except StoriesAIConversationNotFound:
+            raise exceptions.NotFound(
+                error_code=ErrorCode.CONVERSATION_NOT_FOUND,
+                error_message=ErrorMessage.CONVERSATION_NOT_FOUND,
+            )
+        except SelectedLabelsValidationError as e:
+            raise exceptions.BadRequest(
+                error_code=ErrorCode.SELECTED_LABELS_VALIDATION_ERROR,
+                error_message=e.message,
+            )
+        except StoriesAIValidationError as e:
+            raise exceptions.ValidationError(error_data=e.data)
+        except (BadRequestException, InvalidSessionInputFile) as e:
+            message = e.message or ErrorMessage.BAD_REQUEST
+            raise exceptions.BadRequest(error_message=message, error_data=e.data)
+        except PFDAPIException as e:
             logger.exception(message=str(e))
             raise exceptions.InternalServerError()
 
