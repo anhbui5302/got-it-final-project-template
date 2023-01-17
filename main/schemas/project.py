@@ -57,8 +57,24 @@ class ProjectExportSchema(BaseSchema):
     export = fields.List(
         fields.String(validate=validate.OneOf(ProjectExportType.get_list())),
         required=True,
+        validate=validate.Length(min=1),
     )
     export_connections = fields.Bool(missing=True)
+
+
+class ProjectImportSchema(BaseSchema):
+    import_ = fields.List(
+        fields.String(validate=validate.OneOf(ProjectExportType.get_list())),
+        required=True,
+        data_key='import',
+        validate=validate.Length(min=1),
+    )
+    # This is a list of bools due to the way package request parses form data
+    import_connections = fields.List(
+        fields.Bool(required=True),
+        missing=[True],
+        validate=validate.Length(min=1, max=1),
+    )
 
 
 def validate_value_empty(file):

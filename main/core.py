@@ -136,6 +136,24 @@ def parse_files_with(schema):
     return parse_request_files_with_decorator
 
 
+def parse_request_form_with(schema):
+    def parse_request_form_with_decorator(f):
+        @wraps(f)
+        def wrapper(**kwargs):
+            request_args = request.form.to_dict(flat=False)
+            try:
+                parsed_args = schema.load(request_args)
+            except ValidationError as e:
+                raise exceptions.ValidationError(error_data=e.messages)
+
+            kwargs['args'] = parsed_args
+            return f(**kwargs)
+
+        return wrapper
+
+    return parse_request_form_with_decorator
+
+
 def validate_project(f):
     @wraps(f)
     @handle_config_api_exception

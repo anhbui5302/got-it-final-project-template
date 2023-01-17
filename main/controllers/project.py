@@ -6,6 +6,7 @@ from main.core import (
     handle_config_api_exception,
     parse_args_with,
     parse_files_with,
+    parse_request_form_with,
     validate_project,
 )
 from main.engines.async_task import create_task
@@ -28,6 +29,7 @@ from main.schemas.project import (
     ProjectBaseSchema,
     ProjectExportSchema,
     ProjectImportFileSchema,
+    ProjectImportSchema,
     ProjectInitRasaSchema,
     ProjectsSchema,
     ProjectTaskCreatedSchema,
@@ -74,7 +76,8 @@ def create_export_project_task(project, account, args, **__):
                 'account_id': account['id'],
                 'project_id': project['id'],
                 'organization_id': project['organization_id'],
-                **args,
+                'export_types': args.get('export'),
+                'export_connections': args.get('export_connections'),
             }
         ),
         max_retry=0,
@@ -86,8 +89,9 @@ def create_export_project_task(project, account, args, **__):
 @app.route(f'{BASE_PROJECT_PATH}/import', methods=['POST'])
 @auth.require_account_token_auth()
 @validate_project
+@parse_request_form_with(ProjectImportSchema())
 @parse_files_with(ProjectImportFileSchema())
-def create_import_project_task(project, files, **__):
+def create_import_project_task(project, files, args, **__):
     # Check for pending/running tasks
     unfinished_async_task = AsyncTaskModel.query.filter(
         AsyncTaskModel.reference_type == AsyncTaskReferenceType.PROJECT,
@@ -123,6 +127,8 @@ def create_import_project_task(project, files, **__):
                 'project_id': project['id'],
                 'organization_id': project['organization_id'],
                 'file_url': file.url,
+                'import_types': args.get('import_'),
+                'import_connections': args.get('import_connections'),
             }
         ),
         max_retry=0,
