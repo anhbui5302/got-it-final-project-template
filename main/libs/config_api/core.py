@@ -38,7 +38,9 @@ class ConfigAPI:
         ]
 
     @handle_exception
-    def get_all_projects(self, args: dict = None):
+    def get_all_projects(self, args=None):
+        if args is None:
+            args = {}
         url = f'{self.base_url}/projects'
         # Convert args['ids'] back into a string of comma-separated values from list
         if 'ids' in args.keys():
@@ -65,18 +67,20 @@ class ConfigAPI:
 
     @handle_exception
     @inject_project_url
-    def import_project_data(
-        self, project_url, file_tuple: tuple, copy_connections: bool
-    ):
+    def import_project_data(self, project_url, file_tuple: tuple):
         url = f'{project_url}/import'
         files = {'files': file_tuple}
-        payload = {'copy_connections': copy_connections}
-        return self.application_service_client.make_request(
-            'post', url, files=files, payload=payload
-        )
+        return self.application_service_client.make_request('post', url, files=files)
 
     @handle_exception
     @inject_project_url
     def update_autoflow(self, project_url, autoflow_id: int, payload: dict = None):
         url = f'{project_url}/autoflows/{autoflow_id}'
+        return self.application_service_client.make_request('put', url, payload=payload)
+
+    @handle_exception
+    @inject_project_url
+    def change_autoflows_tier(self, project_url, tier: str):
+        payload = {'tier': tier}
+        url = f'{project_url}/autoflows'
         return self.application_service_client.make_request('put', url, payload=payload)

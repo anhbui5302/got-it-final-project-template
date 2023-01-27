@@ -36,7 +36,7 @@ class BaseConfig:
 
     # PUSHER
     PUSHER_APP_ID = '711154'
-    PUSHER_CHANNEL_NAMESPACE = 'm3.9.2'
+    PUSHER_CHANNEL_NAMESPACE = 'admin_panel'
     PUSHER_KEY = ''
     PUSHER_SECRET = ''
 
@@ -64,6 +64,9 @@ class BaseConfig:
     # PFD API
     PFD_API_BASE_URL = 'http://localhost:8091'
     PFD_API_REQUEST_TIMEOUT = 2 * 60 * 60  # seconds
+
+    # CORE API
+    CORE_API_URL = ''
 
     ASYNC_TASK_MAX_RETRY = 0
     ASYNC_TASK_EXPIRATION_TIMEOUT = 30  # seconds

@@ -1,5 +1,6 @@
 from main import config
 from main.libs.config_api.core import ConfigAPI
+from main.libs.core_api.core import CoreAPI
 from main.libs.deepsearch_api.core import DeepsearchAPI
 from main.libs.pfd_api.core import PFDAPI
 
@@ -27,4 +28,12 @@ def get_pfd_api_sdk() -> PFDAPI:
         application_key=config.APPLICATION_KEY,
         application_secret=config.APPLICATION_SECRET,
         request_timeout=config.PFD_API_REQUEST_TIMEOUT,
+    )
+
+
+def get_core_api_sdk():
+    return CoreAPI(
+        base_url=config.CORE_API_URL,
+        application_key=config.APPLICATION_KEY,
+        application_secret=config.APPLICATION_SECRET,
     )
