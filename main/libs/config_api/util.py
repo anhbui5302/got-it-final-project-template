@@ -6,7 +6,7 @@ from main.libs.app_service.exception import ApplicationServiceException
 
 from .exception import (
     BadRequestError,
-    ConfigManagerException,
+    ConfigAPIException,
     ForbiddenError,
     InternalServerError,
     NotFoundError,
@@ -52,7 +52,7 @@ def handle_exception(f):
             if status_code == 500 and error_message:
                 raise InternalServerError(message=error_message, data=error_data)
 
-            raise ConfigManagerException(message=str(e), data=e.data)
+            raise ConfigAPIException(message=str(e), data=e.data)
 
     return wrapper
 

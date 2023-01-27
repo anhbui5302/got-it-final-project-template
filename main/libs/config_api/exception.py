@@ -1,6 +1,6 @@
-class ConfigManagerException(Exception):
+class ConfigAPIException(Exception):
     def __init__(self, message, data=None):
-        super(ConfigManagerException, self).__init__(message)
+        super(ConfigAPIException, self).__init__(message)
         self.message = message
         self.data = data
 
@@ -8,27 +8,27 @@ class ConfigManagerException(Exception):
         return '<{}> - {}'.format(self.__class__.__name__, self.message)
 
 
-class TimeOutError(ConfigManagerException):
+class TimeOutError(ConfigAPIException):
     pass
 
 
-class ServiceError(ConfigManagerException):
+class ServiceError(ConfigAPIException):
     pass
 
 
-class BadRequestError(ConfigManagerException):
+class BadRequestError(ConfigAPIException):
     pass
 
 
-class NotFoundError(ConfigManagerException):
+class NotFoundError(ConfigAPIException):
     pass
 
 
-class ForbiddenError(ConfigManagerException):
+class ForbiddenError(ConfigAPIException):
     pass
 
 
-class InternalServerError(ConfigManagerException):
+class InternalServerError(ConfigAPIException):
     pass
 
 

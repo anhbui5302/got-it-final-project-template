@@ -171,7 +171,7 @@ def handle_config_api_exception(f):
     def wrapper(*args, **kwargs):
         from main.libs.config_api.exception import (
             BadRequestError,
-            ConfigManagerException,
+            ConfigAPIException,
             NotFoundError,
         )
 
@@ -183,7 +183,7 @@ def handle_config_api_exception(f):
         except NotFoundError as e:
             message = e.message or exceptions.ErrorMessage.NOT_FOUND
             raise exceptions.NotFound(error_message=message, error_data=e.data)
-        except ConfigManagerException as e:
+        except ConfigAPIException as e:
             logger.exception(message=str(e))
             raise exceptions.InternalServerError()
 
@@ -268,6 +268,30 @@ def handle_pfd_api_exception(f):
             message = e.message or ErrorMessage.BAD_REQUEST
             raise exceptions.BadRequest(error_message=message, error_data=e.data)
         except PFDAPIException as e:
+            logger.exception(message=str(e))
+            raise exceptions.InternalServerError()
+
+    return wrapper
+
+
+def handle_core_api_exception(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        from main.libs.core_api.exception import (
+            BadRequestError,
+            CoreAPIException,
+            NotFoundError,
+        )
+
+        try:
+            return f(*args, **kwargs)
+        except BadRequestError as e:
+            message = e.message or exceptions.ErrorMessage.BAD_REQUEST
+            raise exceptions.BadRequest(error_message=message, error_data=e.data)
+        except NotFoundError as e:
+            message = e.message or exceptions.ErrorMessage.NOT_FOUND
+            raise exceptions.NotFound(error_message=message, error_data=e.data)
+        except CoreAPIException as e:
             logger.exception(message=str(e))
             raise exceptions.InternalServerError()
 
