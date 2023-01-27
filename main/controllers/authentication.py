@@ -37,10 +37,16 @@ def get_account(
     # Temporarily, all super admins share the same account '*@bot-it.ai'
     account = AccountModel.query.filter(AccountModel.email == '*@bot-it.ai').first()
     if account is None:
-        raise exceptions.AccountNotFound(error_data={'email': email})
+        raise exceptions.AccountNotFound(
+            error_message='You are not able to login to this portal.',
+            error_data={'email': email},
+        )
     # Check the status of the account
     if account.status != AccountStatus.ACTIVE:
-        raise exceptions.InactiveAccount(error_data={'email': email})
+        raise exceptions.InactiveAccount(
+            error_message='You are not able to login to this portal.',
+            error_data={'email': email},
+        )
 
     return account
 
