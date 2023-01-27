@@ -23,6 +23,7 @@ def unzip_import_file(zip_file_buffer: IO[bytes]) -> List[Dict[str, Any]]:
     ]
     expected_file_names = ProjectImportServiceFileName.get_list()
 
+    # Intersection between file names in the zip and expected file names.
     valid_file_names = [
         name for name in actual_file_names if name in expected_file_names
     ]

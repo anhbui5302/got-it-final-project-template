@@ -137,7 +137,7 @@ class ExportProject(BaseAsyncTask):
 
         data = {
             'id': self.task.id,
-            'project_id': self.task.meta_data.kwargs.get('id'),
+            'project_id': self.task.meta_data.kwargs.get('project_id'),
             'status': status,
         }
 

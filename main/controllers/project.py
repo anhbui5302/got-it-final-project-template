@@ -6,7 +6,6 @@ from main.core import (
     handle_config_api_exception,
     parse_args_with,
     parse_files_with,
-    parse_request_form_with,
     validate_project,
 )
 from main.engines.async_task import create_task
@@ -29,7 +28,6 @@ from main.schemas.project import (
     ProjectBaseSchema,
     ProjectExportSchema,
     ProjectImportFileSchema,
-    ProjectImportSchema,
     ProjectInitRasaSchema,
     ProjectsSchema,
     ProjectTaskCreatedSchema,
@@ -37,6 +35,7 @@ from main.schemas.project import (
 
 
 @app.route('/projects', methods=['GET'])
+@auth.require_account_token_auth()
 @parse_args_with(ProjectsSchema())
 @handle_config_api_exception
 def get_projects(args, **__):
@@ -52,12 +51,15 @@ def get_projects(args, **__):
 
 
 @app.route(f'{BASE_PROJECT_PATH}/rasas', methods=['POST'])
+@auth.require_account_token_auth()
 @validate_project
 @parse_args_with(ProjectInitRasaSchema())
 @handle_config_api_exception
-def init_project_rasas_(organization_id: int, project_id: int, args, **__):
+def init_project_rasas_(project, args, **__):
     config_api = get_config_api_sdk()
-    response = config_api.init_project_rasas(organization_id, project_id, args)
+    response = config_api.init_project_rasas(
+        project['id'], project['organization_id'], args
+    )
     return jsonify(response)
 
 
@@ -73,7 +75,7 @@ def create_export_project_task(project, account, args, **__):
         ref_id=project['id'],
         meta_data=AsyncTaskMetaData(
             kwargs={
-                'account_id': account['id'],
+                'account_id': account.id,
                 'project_id': project['id'],
                 'organization_id': project['organization_id'],
                 'export_types': args.get('export'),
@@ -89,9 +91,8 @@ def create_export_project_task(project, account, args, **__):
 @app.route(f'{BASE_PROJECT_PATH}/import', methods=['POST'])
 @auth.require_account_token_auth()
 @validate_project
-@parse_request_form_with(ProjectImportSchema())
 @parse_files_with(ProjectImportFileSchema())
-def create_import_project_task(project, files, args, **__):
+def create_import_project_task(project, files, **__):
     # Check for pending/running tasks
     unfinished_async_task = AsyncTaskModel.query.filter(
         AsyncTaskModel.reference_type == AsyncTaskReferenceType.PROJECT,
@@ -104,7 +105,7 @@ def create_import_project_task(project, files, args, **__):
         )
 
     # Upload file in request to S3
-    zipped_file = files['files'][0]
+    zipped_file = files['file'][0]
 
     file = upload_file(
         reference_type=FileReferenceType.PROJECT,
@@ -127,8 +128,6 @@ def create_import_project_task(project, files, args, **__):
                 'project_id': project['id'],
                 'organization_id': project['organization_id'],
                 'file_url': file.url,
-                'import_types': args.get('import_'),
-                'import_connections': args.get('import_connections'),
             }
         ),
         max_retry=0,

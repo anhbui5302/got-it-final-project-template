@@ -13,7 +13,6 @@ from main.engines.file import download_file
 from main.engines.project import unzip_import_file
 from main.engines.pusher import trigger_async_task_status_changed
 from main.enums import (
-    IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING,
     AsyncTaskStatus,
     AutoflowState,
     BotType,
@@ -44,23 +43,14 @@ class ImportProject(BaseAsyncTask):
         project_id: int,
         organization_id: int,
         file_url: str,
-        import_types: list,
-        import_connections: bool,
     ):
-
+        # For each file to be imported, if they don't exist, skip proxying to their
+        # respective apis.
         zipped_file = download_file(file_url)
         try:
             unzipped_files = unzip_import_file(zipped_file)
         except NoValidImportFileException as e:
             raise exceptions.BadRequest(error_message=e.message)
-
-        unzipped_file_names = [file['name'] for file in unzipped_files]
-        for import_type in import_types:
-            required_file_name = IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING[import_type]
-            if required_file_name not in unzipped_file_names:
-                raise exceptions.BadRequest(
-                    error_message=f'{import_type} specified for import but {required_file_name} is not in uploaded file.'
-                )
 
         config_api = get_config_api_sdk()
         deepsearch_api = get_deepsearch_api_sdk()
@@ -68,12 +58,11 @@ class ImportProject(BaseAsyncTask):
         autoflows = config_api.get_autoflows(
             project_id=project_id, organization_id=organization_id
         )
-        required_file_names = [
-            IMPORT_TYPE_TO_SERVICE_FILE_NAME_MAPPING[import_type]
-            for import_type in import_types
-        ]
+        # The below IndexErrors happen when a file is not found in the unzipped files
+        # list, which is expected, we just skip importing that file.
+
         # Import project settings
-        if ProjectImportServiceFileName.CONFIG_API in required_file_names:
+        try:
             config_api_file = [
                 file
                 for file in unzipped_files
@@ -83,10 +72,11 @@ class ImportProject(BaseAsyncTask):
                 project_id=project_id,
                 organization_id=organization_id,
                 file_tuple=(config_api_file['name'], config_api_file['content']),
-                copy_connections=import_connections,
             )
+        except IndexError:
+            pass
         # Import FAQ Bot
-        elif ProjectImportServiceFileName.DEEPSEARCH_API in required_file_names:
+        try:
             deepsearch_api_file = [
                 file
                 for file in unzipped_files
@@ -121,8 +111,11 @@ class ImportProject(BaseAsyncTask):
                 autoflow_id=faq_autoflow['id'],
                 payload=payload,
             )
+        except IndexError:
+            pass
+
         # Import Conversational Bot
-        elif ProjectImportServiceFileName.PFD_API in required_file_names:
+        try:
             pfd_api_file = [
                 file
                 for file in unzipped_files
@@ -149,6 +142,8 @@ class ImportProject(BaseAsyncTask):
                 latest_session['id'],
                 file_tuple=(pfd_api_file['name'], pfd_api_file['content']),
             )
+        except IndexError:
+            pass
 
         return {}
 
@@ -159,7 +154,7 @@ class ImportProject(BaseAsyncTask):
 
         data = {
             'id': self.task.id,
-            'project_id': self.task.meta_data.kwargs.get('id'),
+            'project_id': self.task.meta_data.kwargs.get('project_id'),
             'status': status,
         }
 
