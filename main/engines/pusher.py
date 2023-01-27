@@ -46,7 +46,7 @@ def authenticate(request: Request, account) -> Any:
             channel=request.form['channel_name'],
             socket_id=request.form['socket_id'],
             custom_data={
-                'account_id': account.id,
+                'user_id': account.id,
             },
         )
     except Exception as e:
@@ -90,6 +90,7 @@ def trigger_pusher(channel_name: str, event_type: str, data: Any) -> None:
     :return:
     """
     try:
+        logger.debug(message='Triggering pusher', data=locals())
         pusher_client.trigger(channel_name, event_type, data)
     except Exception:
         logger.exception(message='Pusher exception')
@@ -119,6 +120,7 @@ def trigger_rasa_status_changed(data: dict):
 
 
 def trigger_async_task_status_changed(data: dict):
+    logger.debug(message='trigger_async_task_status_changed', data=data)
     _defer_trigger(
         _get_projects_channel_name(), PusherEvent.ASYNC_TASK_STATUS_CHANGED, data
     )
