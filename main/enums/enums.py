@@ -100,3 +100,13 @@ class OrganizationTier(EnumBase):
     PRO = 'pro'
     ENTERPRISE = 'enterprise'
     QUICKSTART = 'quickstart'
+
+
+class EventName(EnumBase):
+    IMPORT = 'import'
+    EXPORT = 'export'
+    CREATE_RASA = 'create_rasa'
+    CHANGE_TIER = 'change_tier'
+    CREATE_ORGANIZATION = 'create_organization'
+    ADD_ADMIN = 'add_admin'
+    EDIT_ADMIN = 'edit_admin'

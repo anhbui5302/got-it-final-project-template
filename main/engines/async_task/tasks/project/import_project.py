@@ -8,6 +8,7 @@ from main.core import (
 )
 from main.engines.async_task.schemas import ExceptionInfo, Result
 from main.engines.async_task.tasks.base import BaseAsyncTask
+from main.engines.event import create_event
 from main.engines.exceptions import NoValidImportFileException
 from main.engines.file import download_file
 from main.engines.project import unzip_import_file
@@ -16,6 +17,7 @@ from main.enums import (
     AsyncTaskStatus,
     AutoflowState,
     BotType,
+    EventName,
     ProjectImportServiceFileName,
 )
 from main.libs.utils import get_config_api_sdk, get_deepsearch_api_sdk, get_pfd_api_sdk
@@ -40,6 +42,7 @@ class ImportProject(BaseAsyncTask):
     @handle_pfd_api_exception
     def import_project(
         self,
+        account_id: int,
         project_id: int,
         organization_id: int,
         file_url: str,
@@ -145,6 +148,10 @@ class ImportProject(BaseAsyncTask):
         except IndexError:
             pass
 
+        event_meta_data = {'project_id': project_id}
+        create_event(
+            name=EventName.IMPORT, account_id=account_id, meta_data=event_meta_data
+        )
         return {}
 
     def _notify_status_changed(

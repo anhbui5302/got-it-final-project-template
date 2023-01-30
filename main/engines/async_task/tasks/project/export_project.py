@@ -12,6 +12,7 @@ from main.core import (
 )
 from main.engines.async_task.schemas import ExceptionInfo, Result
 from main.engines.async_task.tasks.base import BaseAsyncTask
+from main.engines.event import create_event
 from main.engines.file import upload_file
 from main.engines.project import generate_export_file_path
 from main.engines.pusher import trigger_async_task_status_changed
@@ -19,6 +20,7 @@ from main.enums import (
     AsyncTaskStatus,
     AutoflowState,
     BotType,
+    EventName,
     FileReferenceType,
     FileType,
     ProjectExportFileName,
@@ -126,6 +128,15 @@ class ExportProject(BaseAsyncTask):
 
         file_url = generate_presigned_url(
             file.url, config.UPLOADED_FILE_EXPIRATION_IN_SECONDS
+        )
+
+        event_meta_data = {
+            'project_id': project_id,
+            'export': export_types,
+            'export_connections': export_connections,
+        }
+        create_event(
+            name=EventName.EXPORT, account_id=account_id, meta_data=event_meta_data
         )
         return file_url
 

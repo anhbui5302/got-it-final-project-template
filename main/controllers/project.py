@@ -11,6 +11,7 @@ from main.core import (
 from main.engines.async_task import create_task
 from main.engines.async_task.tasks.project import ExportProject
 from main.engines.async_task.tasks.project.import_project import ImportProject
+from main.engines.event import create_event
 from main.engines.file import upload_file
 from main.engines.project import generate_import_file_path
 from main.enums import (
@@ -18,6 +19,7 @@ from main.enums import (
     AsyncTaskModule,
     AsyncTaskReferenceType,
     AsyncTaskStatus,
+    EventName,
     FileReferenceType,
     FileType,
     ProjectImportFileName,
@@ -55,10 +57,18 @@ def get_projects(args, **__):
 @validate_project
 @parse_args_with(ProjectInitRasaSchema())
 @handle_config_api_exception
-def init_project_rasas_(project, args, **__):
+def init_project_rasas_(account, project, args, **__):
     config_api = get_config_api_sdk()
     response = config_api.init_project_rasas(
         project['id'], project['organization_id'], args
+    )
+
+    event_meta_data = {
+        'project_id': project['id'],
+        'environments': args['environments'],
+    }
+    create_event(
+        name=EventName.CREATE_RASA, account_id=account.id, meta_data=event_meta_data
     )
     return jsonify(response)
 
@@ -92,7 +102,7 @@ def create_export_project_task(project, account, args, **__):
 @auth.require_account_token_auth()
 @validate_project
 @parse_files_with(ProjectImportFileSchema())
-def create_import_project_task(project, files, **__):
+def create_import_project_task(account, project, files, **__):
     # Check for pending/running tasks
     unfinished_async_task = AsyncTaskModel.query.filter(
         AsyncTaskModel.reference_type == AsyncTaskReferenceType.PROJECT,
@@ -125,6 +135,7 @@ def create_import_project_task(project, files, **__):
         ref_id=project['id'],
         meta_data=AsyncTaskMetaData(
             kwargs={
+                'account_id': account.id,
                 'project_id': project['id'],
                 'organization_id': project['organization_id'],
                 'file_url': file.url,
